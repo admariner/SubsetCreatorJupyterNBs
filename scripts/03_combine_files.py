@@ -32,5 +32,5 @@ def combineSubset(subset):
                 shutil.copyfileobj(rfp, wfp)
 
 pool = Pool(40)
-for result in tqdm(pool.imap(func=combineSubset, iterable=all_subsets_names), total=len(all_subsets_names)):
+for _ in tqdm(pool.imap(func=combineSubset, iterable=all_subsets_names), total=len(all_subsets_names)):
     pass

@@ -18,7 +18,7 @@ def getstatsofsubset(subsetfile):
     quadcounter = 0
     distinct_urls = set()
     #distinct_domains = set()
-    schema_dict = dict()
+    schema_dict = {}
     size = os.path.getsize(input_path + subsetfile) / (1024 * 1024)
     current_chunk = 0
     chunk_lines = []
@@ -45,13 +45,17 @@ def getstatsofsubset(subsetfile):
                 url = line.split()[-2][1:-1]
                 distinct_urls.add(url)
                 domain_extract = tldextract.extract(url)
-                domain = domain_extract.domain + '.' + domain_extract.suffix
+                domain = f'{domain_extract.domain}.{domain_extract.suffix}'
 
                 if domain not in domain_chunk_dict:
                     if len(chunk_lines) > 100000000:
                     #if len(chunk_lines) > 5000:
                         # Empty chunk lines and start new chunk
-                        chunk_path = output_path + subsetfile.replace('.gz', '/') + 'part_{}.gz'.format(current_chunk)
+                        chunk_path = (
+                            output_path
+                            + subsetfile.replace('.gz', '/')
+                            + f'part_{current_chunk}.gz'
+                        )
 
                         if not os.path.exists(output_path + subsetfile.replace('.gz', '/')):
                             os.makedirs(output_path + subsetfile.replace('.gz', '/'))
@@ -82,23 +86,26 @@ def getstatsofsubset(subsetfile):
                 schema_type = line.split()[-4]
                 entity = line.split()[0]
 
-                if current_entity == entity:
-                    if 'schema.org/' in schema_type:
-                        schema_type = schema_type.split('schema.org/')[-1].replace('>', '')
-                        if schema_type not in entity_schema_org_types:
-                            entity_schema_org_types.append(schema_type)
+                if current_entity == entity and 'schema.org/' in schema_type:
+                    schema_type = schema_type.split('schema.org/')[-1].replace('>', '')
+                    if schema_type not in entity_schema_org_types:
+                        entity_schema_org_types.append(schema_type)
 
-                            if schema_type not in domain_stats[domain]['schema_dict']:
-                                domain_stats[domain]['schema_dict'][schema_type] = 0
+                        if schema_type not in domain_stats[domain]['schema_dict']:
+                            domain_stats[domain]['schema_dict'][schema_type] = 0
 
-                            domain_stats[domain]['schema_dict'][schema_type] += 1
+                        domain_stats[domain]['schema_dict'][schema_type] += 1
 
             # collect line for chunk
             chunk_lines.append(line)
             if domain is not None:
                 domain_stats[domain]['quads'] += 1
 
-    chunk_path = output_path + subsetfile.replace('.gz', '/') + 'part_{}.gz'.format(current_chunk)
+    chunk_path = (
+        output_path
+        + subsetfile.replace('.gz', '/')
+        + f'part_{current_chunk}.gz'
+    )
 
     if not os.path.exists(output_path + subsetfile.replace('.gz', '/')):
         os.makedirs(output_path + subsetfile.replace('.gz', '/'))
@@ -114,8 +121,8 @@ def getstatsofsubset(subsetfile):
         lookup_file.write('pld,tld,file_lookup\n')
         for pld in domain_chunk_dict:
             tld = pld.split('.')[-1]
-            chunk = 'part_{}.gz'.format(domain_chunk_dict[pld])
-            lookup_file.write('{},{},{}\n'.format(pld, tld, chunk))
+            chunk = f'part_{domain_chunk_dict[pld]}.gz'
+            lookup_file.write(f'{pld},{tld},{chunk}\n')
 
     # Create domain stats
     for domain in domain_stats:
@@ -124,8 +131,10 @@ def getstatsofsubset(subsetfile):
     domain_stats_path = output_path + subsetfile.replace('.gz', '') + '/' + subsetfile.replace('.gz', '_domain_stats.csv')
     with open(domain_stats_path, 'w') as domain_stats_file:
         domain_stats_file.write('Domain,#Quads of Subset,#Entities of class,Properties and Density\n')
-        for domain in domain_stats:
-            domain_stats_file.write('{},{},{},{}\n'.format(domain, domain_stats[domain]['entities'], domain_stats[domain]['quads'], domain_stats[domain]['schema_dict']))
+        for domain, value in domain_stats.items():
+            domain_stats_file.write(
+                f"{domain},{value['entities']},{domain_stats[domain]['quads']},{domain_stats[domain]['schema_dict']}\n"
+            )
 
 
     return (quadcounter, len(distinct_urls), len(domain_chunk_dict), schema_dict, size, subsetfile, current_chunk)
@@ -159,20 +168,48 @@ for result in tqdm(pool.imap(func=getstatsofsubset, iterable=files_), total=len(
     size = round(result[4], 2)
     if size > 1024:
         size = round(size/1024, 2)
-        txt_size = '{} GB'.format(size)
+        txt_size = f'{size} GB'
     else:
-        txt_size = '{} MB'.format(size)
+        txt_size = f'{size} MB'
 
-    html_stats_file = ("<tr><th><a href=\"http://schema.org/" + schema_subset + "\">" + schema_subset +
-                       "</a></th><td> Quads: " + str(f"{result[0]:,}") + "</br> URLs: " + str(f"{result[1]:,}") +
-                       "</br> Hosts: " + str(f"{result[2]:,}") + "</br>" + top_related_classes + "</td><td>" + txt_size
-                        + "<br> ({})".format(current_chunk)
-                       + "</td><td><a href=\"https://data.dws.informatik.uni-mannheim.de/structureddata/{}/quads/classspecific/".format(extraction) + filename.replace('.gz', '') + "\">" + filename.replace('.gz', '') + "</a> (<a href=\"https://data.dws.informatik.uni-mannheim.de/structureddata/{}/quads/classspecific/{}/".format(extraction, filename.replace('.gz', '')) + filename.replace(
-                ".gz", "_sample.txt") + "\">sample</a>)</td>"+
-                "<td> <a href=\"https://data.dws.informatik.uni-mannheim.de/structureddata/{}/quads/classspecific/{}/{}_lookup.csv\">lookup_file</a>".format(extraction, filename.replace('.gz', ''), filename.replace('.gz', '')) +
-            "<br> <a href=\"https://data.dws.informatik.uni-mannheim.de/structureddata/{}/quads/classspecific/{}/{}_domain_stats.csv\">pld_stats_file</a>".format(extraction, filename.replace('.gz', ''), filename.replace('.gz', '')) +
-        "</td>"
-                       "</tr>\n")
+    html_stats_file = (
+        (
+            (
+                (
+                    (
+                        (
+                            (
+                                "<tr><th><a href=\"http://schema.org/"
+                                + schema_subset
+                                + "\">"
+                                + schema_subset
+                                + "</a></th><td> Quads: "
+                                + str(f"{result[0]:,}")
+                                + "</br> URLs: "
+                                + str(f"{result[1]:,}")
+                                + "</br> Hosts: "
+                                + str(f"{result[2]:,}")
+                                + "</br>"
+                                + top_related_classes
+                                + "</td><td>"
+                                + txt_size
+                                + f"<br> ({current_chunk})"
+                            )
+                            + f'</td><td><a href=\"https://data.dws.informatik.uni-mannheim.de/structureddata/{extraction}/quads/classspecific/'
+                        )
+                        + filename.replace('.gz', '')
+                        + "\">"
+                    )
+                    + filename.replace('.gz', '')
+                    + f"""</a> (<a href=\"https://data.dws.informatik.uni-mannheim.de/structureddata/{extraction}/quads/classspecific/{filename.replace('.gz', '')}/"""
+                )
+                + filename.replace(".gz", "_sample.txt")
+                + "\">sample</a>)</td>"
+            )
+            + f"""<td> <a href=\"https://data.dws.informatik.uni-mannheim.de/structureddata/{extraction}/quads/classspecific/{filename.replace('.gz', '')}/{filename.replace('.gz', '')}_lookup.csv\">lookup_file</a>"""
+        )
+        + f"""<br> <a href=\"https://data.dws.informatik.uni-mannheim.de/structureddata/{extraction}/quads/classspecific/{filename.replace('.gz', '')}/{filename.replace('.gz', '')}_domain_stats.csv\">pld_stats_file</a>"""
+    ) + "</td>" "</tr>\n"
 
     print(html_stats_file)
     html_stats += html_stats_file

@@ -27,9 +27,9 @@ if __name__ == "__main__":
     formats = ['html-embedded-jsonld', 'html-microdata']
 
     for format in formats:
-        input_path = "/ceph/alebrink/WDC_Extraction_2022/2_NQperFormat/{}/".format(format)
+        input_path = f"/ceph/alebrink/WDC_Extraction_2022/2_NQperFormat/{format}/"
         files_to_sort = [f for f in listdir(input_path) if isfile(join(input_path, f))]
-        sorted_path = "/ceph/alebrink/WDC_Extraction_2022/7_sorted_quads/{}/".format(format)
+        sorted_path = f"/ceph/alebrink/WDC_Extraction_2022/7_sorted_quads/{format}/"
         if not os.path.exists(sorted_path):
             # Create a new directory because it does not exist
             os.makedirs(sorted_path)

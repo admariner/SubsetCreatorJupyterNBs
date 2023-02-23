@@ -24,12 +24,10 @@ def createSubsets(filepath):
     types_of_url = set()
     lines_of_url = []
 
-    lines_to_append = dict()
-
-    for schema_class in class_list_file_dict.keys():
-        lines_to_append[schema_class] = []
-
-    with  gzip.open(input_path + filepath, 'r') as file_:
+    lines_to_append = {
+        schema_class: [] for schema_class in class_list_file_dict.keys()
+    }
+    with gzip.open(input_path + filepath, 'r') as file_:
         for line_ in file_:
             try:
                 line = line_.decode('utf8')
@@ -39,7 +37,7 @@ def createSubsets(filepath):
                 print("Bad line")
                 continue
 
-            if url != current_url and current_url != "":
+            if url != current_url != "":
                 # write lines
                 for type_of_url in types_of_url:
                     class_file_name = class_list_file_dict.get(type_of_url)
@@ -63,14 +61,14 @@ def createSubsets(filepath):
         for type_of_url in types_of_url:
             lines_to_append[type_of_url].extend(lines_of_url)
 
-    for key in lines_to_append:
+    for key, value in lines_to_append.items():
         class_file = gzip.open(
             output_path + class_list_file_dict[key] + "/" + class_list_file_dict[key] + "___" + filepath + ".gz", 'a')
-        for enc_line in lines_to_append[key]:
+        for enc_line in value:
             class_file.write(enc_line.encode())
         class_file.close()
 
 
 pool = Pool(40)
-for result in tqdm(pool.imap(func=createSubsets, iterable=files_json), total=len(files_json)):
+for _ in tqdm(pool.imap(func=createSubsets, iterable=files_json), total=len(files_json)):
     pass
