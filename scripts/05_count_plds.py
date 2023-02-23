@@ -28,7 +28,7 @@ def collect_urls_per_domain(filepath):
 
                     url = line.split()[-2][1:-1]
                     domain_extract = tldextract.extract(url)
-                    domain = domain_extract.domain + '.' + domain_extract.suffix
+                    domain = f'{domain_extract.domain}.{domain_extract.suffix}'
                     domain_hash = hash(domain)
                     if domain_hash not in domain_2_urls:
                         domain_2_urls[domain_hash] = set()
@@ -66,7 +66,7 @@ if __name__ == "__main__":
 
     print(" Start Count")
     for format in os.listdir(input_path):
-        input_path_format = '{}/{}/'.format(input_path, format)
+        input_path_format = f'{input_path}/{format}/'
         files_to_count_plds = [input_path_format + f for f in listdir(input_path_format) if isfile(join(input_path_format, f))]
 
         pool = Pool(40)
@@ -78,6 +78,10 @@ if __name__ == "__main__":
 
     # Count domains & urls
     no_domains = len(global_domain_2_urls)
-    no_urls = sum([len(global_domain_2_urls[domain]) for domain in global_domain_2_urls])
+    no_urls = sum(
+        len(global_domain_2_urls[domain]) for domain in global_domain_2_urls
+    )
     avg_urls_per_domain = no_urls / no_domains
-    print("Found {} domains and {} urls that use schema.org --> avg. {} urls per domain ".format(no_domains, no_urls, avg_urls_per_domain))
+    print(
+        f"Found {no_domains} domains and {no_urls} urls that use schema.org --> avg. {avg_urls_per_domain} urls per domain "
+    )
